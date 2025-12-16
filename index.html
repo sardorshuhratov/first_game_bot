@@ -3,168 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Basketball Pro Max</title>
+    <title>Basketball Ultimate 3D</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --rim: #e63946; --gold: #ffcc00; }
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Arial Black', sans-serif; touch-action: none; color: white; }
+        :root { --rim: #ff4d00; --gold: #ffcc00; }
+        body { margin: 0; overflow: hidden; background: #050505; font-family: 'Inter', sans-serif; touch-action: none; color: white; }
         
-        #game-container { position: relative; width: 100vw; height: 100vh; background: radial-gradient(circle at bottom, #1a1a2e, #000); }
+        #game-container { position: relative; width: 100vw; height: 100vh; perspective: 1000px; background: radial-gradient(circle at center, #1e3a8a 0%, #000 100%); }
 
-        /* Maydon va Ustun */
-        .post { position: absolute; bottom: 0; left: 50%; width: 14px; height: 75%; background: linear-gradient(to right, #222, #444, #222); transform: translateX(-50%); z-index: 1; border-radius: 5px 5px 0 0; }
-        
-        /* Savat va To'r */
-        .backboard-container { position: absolute; top: 15%; left: 50%; transform: translateX(-50%); z-index: 2; }
-        .backboard { width: 200px; height: 140px; background: rgba(255,255,255,0.05); border: 5px solid #fff; border-radius: 5px; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 25px; backdrop-filter: blur(4px); }
-        .rim { width: 80px; height: 12px; border: 5px solid var(--rim); border-radius: 50%; position: relative; z-index: 5; }
-        .net { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 70px; height: 65px; background: repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(255,255,255,0.4) 6px, rgba(255,255,255,0.4) 12px), repeating-linear-gradient(-45deg, transparent, transparent 6px, rgba(255,255,255,0.4) 6px, rgba(255,255,255,0.4) 12px); border-radius: 0 0 45% 45%; transition: 0.2s; }
+        /* Realistik Maydon */
+        .floor { position: absolute; bottom: 0; width: 100%; height: 30%; background: repeating-linear-gradient(90deg, #111, #111 50px, #1a1a1a 50px, #1a1a1a 100px); transform: rotateX(60deg); transform-origin: bottom; border-top: 3px solid #333; }
 
-        /* Koptok va Olov effekti */
-        .ball { position: absolute; bottom: 80px; left: calc(50% - 35px); width: 75px; height: 75px; border-radius: 50%; background: url('https://pngimg.com/uploads/basketball/basketball_PNG1103.png') center/cover; box-shadow: 0 10px 20px rgba(0,0,0,0.5); z-index: 100; cursor: grab; }
-        .fire { box-shadow: 0 0 30px #ff4500, 0 0 60px #ff8c00 !important; filter: saturate(2); }
+        /* 3D Savat va Ustun */
+        .hoop-system { position: absolute; top: 15%; left: 50%; transform: translateX(-50%); z-index: 10; display: flex; flex-direction: column; align-items: center; }
+        .backboard { width: 220px; height: 150px; background: rgba(255,255,255,0.05); border: 6px solid #fff; border-radius: 8px; backdrop-filter: blur(10px); box-shadow: 0 0 30px rgba(255,255,255,0.1); display: flex; justify-content: center; align-items: flex-end; padding-bottom: 25px; }
+        .rim-3d { width: 85px; height: 15px; border: 5px solid var(--rim); border-radius: 50%; box-shadow: 0 10px 0 #b33600; transform: rotateX(15deg); position: relative; }
+        .net-mesh { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 75px; height: 80px; background-image: radial-gradient(circle, transparent 20%, #fff 20%, #fff 30%, transparent 30%); background-size: 10px 10px; opacity: 0.4; border-radius: 0 0 50% 50%; transition: 0.3s; }
 
-        /* UI */
-        #ui { position: absolute; top: 20px; width: 100%; display: flex; justify-content: space-around; z-index: 1000; pointer-events: none; }
-        .stat { text-align: center; }
-        .stat-label { font-size: 12px; color: #aaa; text-transform: uppercase; }
-        .stat-value { font-size: 24px; display: block; }
-        
-        #wind-indicator { position: absolute; top: 100px; right: 20px; font-size: 14px; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 15px; }
-        
-        #overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; }
-        .combo-text { position: absolute; color: var(--gold); font-size: 40px; font-weight: 900; animation: comboAnim 0.5s ease-out; pointer-events: none; opacity: 0; }
-        
-        @keyframes comboAnim { 0% { opacity: 0; transform: scale(0.5); } 50% { opacity: 1; transform: scale(1.2); } 100% { opacity: 0; transform: scale(1); } }
+        /* Koptok va Soya */
+        .ball-wrapper { position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); z-index: 100; transition: filter 0.3s; }
+        .ball { width: 85px; height: 85px; border-radius: 50%; background: url('https://pngimg.com/uploads/basketball/basketball_PNG1103.png') center/cover; box-shadow: inset -15px -15px 30px rgba(0,0,0,0.7); }
+        .shadow { position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); width: 80px; height: 20px; background: rgba(0,0,0,0.5); border-radius: 50%; filter: blur(8px); transition: 0.1s; }
+
+        /* UI Elementlari */
+        .hud { position: absolute; top: 30px; width: 100%; display: flex; justify-content: space-around; z-index: 1000; font-weight: 900; letter-spacing: 2px; }
+        .timer-box { color: #ff4d4d; border: 2px solid #ff4d4d; padding: 5px 15px; border-radius: 10px; background: rgba(255,77,77,0.1); }
+        .combo-meter { color: var(--gold); font-size: 1.2rem; display: none; }
+
+        #overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; text-align: center; }
+        .btn-start { padding: 18px 60px; border: none; border-radius: 50px; background: linear-gradient(45deg, var(--rim), #ff8800); color: white; font-weight: 900; font-size: 22px; cursor: pointer; box-shadow: 0 10px 20px rgba(255,77,0,0.4); }
+
+        .fire-mode { filter: drop-shadow(0 0 20px #ff4d00) saturate(2); }
     </style>
 </head>
 <body>
     <div id="game-container">
-        <div id="ui">
-            <div class="stat"><span class="stat-label">Vaqt</span><span id="timer" class="stat-value">60</span></div>
-            <div class="stat"><span class="stat-label">Ball</span><span id="score" class="stat-value">0</span></div>
-            <div class="stat"><span class="stat-label">Combo</span><span id="combo" class="stat-value">0</span></div>
+        <div class="hud">
+            <div class="timer-box" id="timer">01:00</div>
+            <div id="score-box">BALL: <span id="score">0</span></div>
+            <div class="combo-meter" id="combo-box">🔥 COMBO <span id="combo">0</span></div>
         </div>
-
-        <div id="wind-indicator">Shamol: <span id="wind-val">0</span></div>
 
         <div id="overlay">
-            <h1 style="color: var(--gold); letter-spacing: 5px;">BASKETBALL PRO</h1>
-            <p id="final-msg"></p>
-            <button onclick="startGame()" style="padding: 15px 50px; border: none; border-radius: 30px; background: var(--rim); color: white; font-weight: bold; font-size: 20px; cursor: pointer;">O'YINNI BOSHLASH</button>
+            <h1 style="font-size: 3rem; margin-bottom: 0;">ULTIMATE</h1>
+            <h2 style="color: var(--rim); margin-top: 0;">BASKETBALL 3D</h2>
+            <p id="result-text" style="font-size: 1.2rem; margin-bottom: 30px;"></p>
+            <button class="btn-start" onclick="initGame()">PLAY NOW</button>
         </div>
 
-        <div class="post"></div>
-        <div class="backboard-container">
-            <div class="backboard"><div class="rim" id="hoop"><div class="net" id="net"></div></div></div>
+        <div class="floor"></div>
+        <div class="hoop-system">
+            <div class="backboard">
+                <div class="rim-3d" id="rim">
+                    <div class="net-mesh" id="net"></div>
+                </div>
+            </div>
         </div>
-        <div class="ball" id="ball"></div>
+
+        <div class="ball-wrapper" id="ball-wrapper">
+            <div class="ball" id="ball"></div>
+            <div class="shadow" id="shadow"></div>
+        </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        let score = 0, combo = 0, timeLeft = 60, wind = 0;
-        let gameActive = false, timerInterval;
-        const ball = document.getElementById('ball'), scoreEl = document.getElementById('score');
-        const comboEl = document.getElementById('combo'), timerEl = document.getElementById('timer');
-        const windEl = document.getElementById('wind-val'), net = document.getElementById('net');
+        let score = 0, combo = 0, timeLeft = 60, gameRunning = false, timer;
+        const ballWrapper = document.getElementById('ball-wrapper'), ball = document.getElementById('ball');
+        const shadow = document.getElementById('shadow'), net = document.getElementById('net');
+        const scoreEl = document.getElementById('score'), comboEl = document.getElementById('combo'), timerEl = document.getElementById('timer');
 
-        function startGame() {
-            score = 0; combo = 0; timeLeft = 60; gameActive = true;
-            document.getElementById('overlay').style.display = "none";
-            updateWind();
-            startTimer();
+        function initGame() {
+            score = 0; combo = 0; timeLeft = 60; gameRunning = true;
+            document.getElementById('overlay').style.display = 'none';
+            scoreEl.innerText = '0';
+            updateTimer();
+            timer = setInterval(updateTimer, 1000);
         }
 
-        function updateWind() {
-            wind = (Math.random() * 4 - 2).toFixed(1); // -2 dan 2 gacha
-            windEl.innerText = wind > 0 ? `➡️ ${wind}` : `⬅️ ${Math.abs(wind)}`;
+        function updateTimer() {
+            timeLeft--;
+            let sec = timeLeft % 60;
+            timerEl.innerText = `00:${sec < 10 ? '0' + sec : sec}`;
+            if (timeLeft <= 0) stopGame();
         }
 
-        function startTimer() {
-            clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                timerEl.innerText = timeLeft;
-                if (timeLeft <= 0) endGame();
-            }, 1000);
+        function stopGame() {
+            gameRunning = false; clearInterval(timer);
+            document.getElementById('overlay').style.display = 'flex';
+            document.getElementById('result-text').innerText = `TOTAL SCORE: ${score}`;
         }
 
-        function endGame() {
-            gameActive = false; clearInterval(timerInterval);
-            document.getElementById('overlay').style.display = "flex";
-            document.getElementById('final-msg').innerText = `TUGADI! JAMI BALL: ${score}`;
-        }
+        let isDown = false, sX, sY, sT;
 
-        let isDragging = false, startX, startY, startTime;
-
-        ball.addEventListener('pointerdown', (e) => {
-            if (!gameActive || isDragging) return;
-            isDragging = true;
-            startX = e.clientX; startY = e.clientY; startTime = Date.now();
-            ball.style.transition = "none";
+        ballWrapper.addEventListener('pointerdown', (e) => {
+            if (!gameRunning || isDown) return;
+            isDown = true; sX = e.clientX; sY = e.clientY; sT = Date.now();
+            ballWrapper.style.transition = 'none';
         });
 
         window.addEventListener('pointerup', (e) => {
-            if (!isDragging) return;
-            isDragging = false;
-            const duration = Date.now() - startTime;
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
+            if (!isDown) return;
+            isDown = false;
+            const dur = Date.now() - sT;
+            const dX = e.clientX - sX;
+            const dY = e.clientY - sY;
 
-            if (dy < -50 && duration < 500) {
-                // Shamol ta'sirini hisoblash
-                const targetX = (dx * 2.5) + (wind * 100);
-                const targetY = dy * 2.5;
-                launch(targetX, targetY);
-            } else { reset(); }
+            if (dY < -60 && dur < 500) {
+                shootBall(dX * 2.5, dY * 2.8, dur);
+            } else {
+                resetBall();
+            }
         });
 
-        function launch(tx, ty) {
-            if (combo >= 3) ball.classList.add('fire');
-            ball.style.transition = "transform 0.8s cubic-bezier(0.15, 0.85, 0.35, 1)";
-            ball.style.transform = `translate(${tx}px, ${ty}px) scale(0.35) rotate(${tx}deg)`;
+        function shootBall(tx, ty, dur) {
+            const zScale = 0.3; // Koptok uzoqlashishi
+            ballWrapper.style.transition = `transform 0.8s cubic-bezier(0.1, 0.5, 0.3, 1)`;
+            ballWrapper.style.transform = `translate(${tx}px, ${ty}px) scale(${zScale})`;
+            shadow.style.transform = `translateX(-50%) scale(0.2)`;
+            shadow.style.opacity = '0.2';
+
+            if (combo >= 3) ballWrapper.classList.add('fire-mode');
 
             setTimeout(() => {
                 const isGoal = Math.abs(tx) < 45 && ty < -380 && ty > -550;
                 if (isGoal) {
-                    handleGoal();
+                    score += (combo >= 3 ? 5 : 2);
+                    combo++;
+                    scoreEl.innerText = score;
+                    if (combo >= 3) {
+                        document.getElementById('combo-box').style.display = 'block';
+                        comboEl.innerText = combo;
+                    }
+                    net.style.transform = 'translateX(-50%) scaleY(1.5) skewX(5deg)';
+                    setTimeout(() => net.style.transform = 'translateX(-50%) scaleY(1)', 300);
+                    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
                 } else {
-                    handleMiss(tx);
+                    combo = 0;
+                    document.getElementById('combo-box').style.display = 'none';
+                    ballWrapper.classList.remove('fire-mode');
+                    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
                 }
-                setTimeout(reset, 600);
+                setTimeout(resetBall, 600);
             }, 800);
         }
 
-        function handleGoal() {
-            combo++;
-            let points = combo >= 3 ? 5 : 2;
-            score += points;
-            scoreEl.innerText = score;
-            comboEl.innerText = combo;
-            
-            net.style.transform = "translateX(-50%) scaleY(1.4)";
-            setTimeout(() => net.style.transform = "translateX(-50%) scaleY(1)", 300);
-            
-            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-            updateWind();
-        }
-
-        function handleMiss(tx) {
-            combo = 0;
-            comboEl.innerText = "0";
-            ball.classList.remove('fire');
-            // Bounce effekti
-            ball.style.transition = "transform 0.4s ease-in";
-            ball.style.transform = `translate(${tx}px, 0px) scale(0.7)`;
-            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-        }
-
-        function reset() {
-            ball.style.transition = "transform 0.4s ease-out";
-            ball.style.transform = "translate(0,0) scale(1) rotate(0deg)";
+        function resetBall() {
+            ballWrapper.style.transition = 'all 0.5s ease-out';
+            ballWrapper.style.transform = 'translate(0, 0) scale(1)';
+            shadow.style.transform = 'translateX(-50%) scale(1)';
+            shadow.style.opacity = '0.5';
         }
     </script>
 </body>
