@@ -3,34 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Basketball Ultra Real</title>
+    <title>Basketball Ultra Real - Fizika</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root { --rim: #ff4d00; --gold: #ffcc00; }
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Arial Black', sans-serif; touch-action: none; color: white; }
         #game-container { position: relative; width: 100vw; height: 100vh; perspective: 1200px; background: radial-gradient(circle at bottom, #111 0%, #000 100%); }
-
-        /* Realistik Maydon */
         .floor { position: absolute; bottom: 0; width: 100%; height: 25%; background: #d2c9c9; transform: rotateX(60deg); border-top: 4px solid #333; }
-
-        /* 3D SAVAT VA REALISTIK TO'R */
         .hoop-system { position: absolute; top: 15%; left: 50%; transform: translateX(-50%); z-index: 10; }
-        .backboard { width: 220px; height: 150px; background: rgba(255,255,255,0.05); border: 5px solid #fff; border-radius: 5px; backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: flex-end; padding-bottom: 30px; }
+        .backboard { width: 220px; height: 150px; background: rgba(255,255,255,0.05); border: 5px solid #fff; border-radius: 5px; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 30px; }
         .rim { width: 85px; height: 10px; border: 5px solid var(--rim); border-radius: 50%; position: relative; z-index: 20; transform: rotateX(10deg); }
-        
-        /* Realistik SVG To'r */
         .net-svg { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 80px; height: 90px; z-index: 15; pointer-events: none; transition: 0.3s; }
         .net-path { fill: none; stroke: rgba(255,255,255,0.6); stroke-width: 2; stroke-dasharray: 4,4; }
-
-        /* Koptok */
         .ball-wrapper { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 100; }
         .ball { width: 85px; height: 85px; border-radius: 50%; background: url('https://pngimg.com/uploads/basketball/basketball_PNG1103.png') center/cover; box-shadow: inset -10px -10px 20px rgba(0,0,0,0.8); }
-
-        /* UI */
         .hud { position: absolute; top: 30px; width: 100%; display: flex; justify-content: space-around; font-size: 22px; z-index: 1000; }
         #timer { color: #ff4d4d; }
-
-        /* OVERLAY (Start & End) */
         #overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; padding: 20px; text-align: center; }
         .btn { margin: 10px; padding: 15px 40px; border: none; border-radius: 50px; font-weight: 900; font-size: 18px; cursor: pointer; min-width: 200px; }
         .btn-play { background: linear-gradient(45deg, var(--rim), #ff8800); color: white; }
@@ -75,13 +63,23 @@
         tg.expand();
 
         let score = 0, timeLeft = 60, gameActive = false, timer;
-        const ballWrap = document.getElementById('ball-wrapper'), scoreEl = document.getElementById('score'), timerEl = document.getElementById('timer');
-        const overlay = document.getElementById('overlay'), net = document.getElementById('net'), netPath = document.getElementById('netPath');
+        const ballWrap = document.getElementById('ball-wrapper');
+        const scoreEl = document.getElementById('score');
+        const timerEl = document.getElementById('timer');
+        const overlay = document.getElementById('overlay');
+        const net = document.getElementById('net');
+        let animId = null;
+        const GRAVITY = 2200;
+
+        function getRim() {
+            const rim = document.getElementById('rim').getBoundingClientRect();
+            return { x: rim.left + rim.width/2, y: rim.top + rim.height/2, r: rim.width/2 - 6 };
+        }
 
         function startGame() {
             score = 0; timeLeft = 60; gameActive = true;
-            scoreEl.innerText = "0";
-            overlay.style.display = "none";
+            scoreEl.innerText = '0';
+            overlay.style.display = 'none';
             startTimer();
         }
 
@@ -90,67 +88,85 @@
             timer = setInterval(() => {
                 timeLeft--;
                 timerEl.innerText = `⏱ ${timeLeft}s`;
-                if (timeLeft <= 0) endGame();
-            }, 1000);
+                if(timeLeft <= 0) endGame();
+            },1000);
         }
 
         function endGame() {
             gameActive = false;
             clearInterval(timer);
-            overlay.style.display = "flex";
+            cancelAnimationFrame(animId);
+            overlay.style.display = 'flex';
             document.getElementById('title').innerText = "O'YIN TUGADI!";
             document.getElementById('result-msg').innerText = `Siz to'plagan ball: ${score}`;
-            
-            // Tugmalarni almashtirish
             document.getElementById('button-group').innerHTML = `
                 <button class="btn btn-play" onclick="startGame()">QAYTA O'YNASH</button>
-                <button class="btn btn-exit" onclick="tg.close()">YAKUNLASH</button>
-            `;
+                <button class="btn btn-exit" onclick="tg.close()">YAKUNLASH</button>`;
         }
 
         let isDown = false, sX, sY, sT;
-
-        ballWrap.addEventListener('pointerdown', (e) => {
-            if (!gameActive || isDown) return;
-            isDown = true; sX = e.clientX; sY = e.clientY; sT = Date.now();
-            ballWrap.style.transition = "none";
+        ballWrap.addEventListener('pointerdown',(e)=>{
+            if(!gameActive || isDown) return;
+            isDown = true; sX=e.clientX; sY=e.clientY; sT=performance.now();
+            ballWrap.style.transition='none';
         });
 
-        window.addEventListener('pointerup', (e) => {
-            if (!isDown) return;
-            isDown = false;
-            const dur = Date.now() - sT;
-            const dX = e.clientX - sX;
-            const dY = e.clientY - sY;
-
-            if (dY < -60 && dur < 500) {
-                const tx = dX * 2.8, ty = dY * 2.5;
-                ballWrap.style.transition = "transform 0.8s cubic-bezier(0.15, 0.85, 0.35, 1)";
-                ballWrap.style.transform = `translate(${tx}px, ${ty}px) scale(0.35)`;
-
-                setTimeout(() => {
-                    if (Math.abs(tx) < 45 && ty < -380 && ty > -550) {
-                        handleGoal();
-                    } else {
-                        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-                    }
-                    setTimeout(resetBall, 600);
-                }, 800);
+        window.addEventListener('pointerup',(e)=>{
+            if(!isDown) return;
+            isDown=false;
+            const dt=(performance.now()-sT)/1000;
+            const dx=e.clientX-sX;
+            const dy=e.clientY-sY;
+            if(dy<-60 && dt<0.5){
+                const speed=Math.min(1400,Math.hypot(dx,dy)*3);
+                const angle=Math.atan2(-dy,dx);
+                const vx=Math.cos(angle)*speed;
+                const vy=-Math.sin(angle)*speed;
+                launchBall(vx,vy);
             } else { resetBall(); }
         });
 
-        function handleGoal() {
-            score += 2;
-            scoreEl.innerText = score;
-            // To'rning fizik harakati (SVG cho'zilishi)
-            net.style.transform = "translateX(-50%) scaleY(1.5)";
-            setTimeout(() => net.style.transform = "translateX(-50%) scaleY(1)", 300);
-            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
+        function launchBall(vx,vy){
+            cancelAnimationFrame(animId);
+            const start=ballWrap.getBoundingClientRect();
+            let x=start.left+start.width/2;
+            let y=start.top+start.height/2;
+            let last=performance.now();
+            let scored=false;
+            function frame(now){
+                const dt=(now-last)/1000;
+                last=now;
+                vy+=GRAVITY*dt;
+                x+=vx*dt;
+                y+=vy*dt;
+                ballWrap.style.transform=`translate(${x-start.left}px,${y-start.top}px) scale(0.6)`;
+                const rim=getRim();
+                const dist=Math.hypot(x-rim.x,y-rim.y);
+                if(!scored && dist<rim.r && vy>0){
+                    scored=true;
+                    handleGoal(dist<rim.r*0.6);
+                }
+                if(y>window.innerHeight+100){
+                    resetBall();
+                    return;
+                }
+                animId=requestAnimationFrame(frame);
+            }
+            animId=requestAnimationFrame(frame);
         }
 
-        function resetBall() {
-            ballWrap.style.transition = "all 0.5s ease-out";
-            ballWrap.style.transform = "translate(0,0) scale(1)";
+        function handleGoal(isSwish){
+            score+=2;
+            scoreEl.innerText=score;
+            net.style.transform=isSwish?'translateX(-50%) scaleY(1.8)':'translateX(-50%) scaleY(1.3)';
+            setTimeout(()=>net.style.transform='translateX(-50%) scaleY(1)',300);
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred(isSwish?'heavy':'medium');
+        }
+
+        function resetBall(){
+            cancelAnimationFrame(animId);
+            ballWrap.style.transition='all 0.4s ease-out';
+            ballWrap.style.transform='translate(0,0) scale(1)';
         }
     </script>
 </body>
