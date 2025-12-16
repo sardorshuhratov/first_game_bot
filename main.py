@@ -1,33 +1,41 @@
+from aiogram import Bot, Dispatcher, types, executor
 import os
-import asyncio
-from aiogram import Bot, Dispatcher, types
-from aiogram.filters import Command
-from aiogram.types import WebAppInfo, InlineKeyboardMarkup, InlineKeyboardButton
-from dotenv import load_dotenv
 
-load_dotenv()
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+API_TOKEN = os.getenv("TELEGRAM_TOKEN")  # Telegram bot tokeningiz
 
-bot = Bot(token=BOT_TOKEN)
-dp = Dispatcher()
+bot = Bot(token=API_TOKEN)
+dp = Dispatcher(bot)
 
-@dp.message(Command("start"))
-async def start(message: types.Message):
-    # O'zgartirish kerak bo'lgan yagona joy:
-    game_url = "https://funny-valkyrie-3c6615.netlify.app/"
+# Web-app link (sizning HTML/JS faylingizni host qilgan link)
+WEB_APP_URL = "https://funny-valkyrie-3c6615.netlify.app/"
 
-    kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🏀 O'yinni boshlash", web_app=WebAppInfo(url=game_url))]
-    ])
+@dp.message_handler(commands=['start', 'help'])
+async def send_welcome(message: types.Message):
+    print(f"[LOG] {message.from_user.full_name} ({message.from_user.id}) started the bot")
+    await message.reply("Salom! Basketball o'yinini o'ynash uchun /play buyrug'ini yuboring.")
 
-    await message.answer(
-        "<b>Basketbol 3D: Professional Edition</b>\n\n"
-        "Koptokni xohlagan yo'nalishingizda otishingiz mumkin. "
-        "Savatga tushirish uchun aniqlik va kuchni to'g'ri tanlang!",
-        parse_mode="HTML",
-        reply_markup=kb
+@dp.message_handler(commands=['play'])
+async def play_game(message: types.Message):
+    print(f"[LOG] {message.from_user.full_name} ({message.from_user.id}) clicked /play")
+    keyboard = types.InlineKeyboardMarkup()
+    web_app_btn = types.InlineKeyboardButton(
+        text="O'YINNI BOSHLASH 🏀",
+        web_app=types.WebAppInfo(url=WEB_APP_URL)
     )
+    keyboard.add(web_app_btn)
+    await message.reply("Basketball o'yiniga xush kelibsiz! Pastdagi tugmani bosing:", reply_markup=keyboard)
+
+# WebAppData qabul qilish
+@dp.message_handler(content_types=types.ContentType.WEB_APP_DATA)
+async def web_app_data_handler(message: types.Message):
+    try:
+        data = message.web_app_data.data
+        print(f"[LOG] {message.from_user.full_name} ({message.from_user.id}) scored: {data} ball")
+        await message.reply(f"Sizning natijangiz: {data} ball!")
+    except Exception as e:
+        print(f"[ERROR] WebAppData handler: {e}")
+        await message.reply(f"Xatolik yuz berdi: {e}")
 
 if __name__ == "__main__":
-    print("Bot ishlayapti...")
-    asyncio.run(dp.start_polling(bot))
+    print("[INFO] Bot is starting...")
+    executor.start_polling(dp, skip_updates=True)
