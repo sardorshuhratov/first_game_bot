@@ -3,58 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro Basketball 60s Challenge</title>
+    <title>Basketball Pro Max</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --rim-color: #fb8500; }
-        body { margin: 0; overflow: hidden; background: #023047; font-family: 'Segoe UI', sans-serif; touch-action: none; }
+        :root { --rim: #e63946; --gold: #ffcc00; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Arial Black', sans-serif; touch-action: none; color: white; }
         
-        #game-container { position: relative; width: 100vw; height: 100vh; background: linear-gradient(to bottom, #14213d 0%, #000 100%); }
+        #game-container { position: relative; width: 100vw; height: 100vh; background: radial-gradient(circle at bottom, #1a1a2e, #000); }
 
-        /* Maydon va Savat Ustuni */
-        .court-floor { position: absolute; bottom: 0; width: 100%; height: 20%; background: #000; border-top: 2px solid #fff; opacity: 0.3; }
-        .post { position: absolute; bottom: 0; left: 50%; width: 12px; height: 75%; background: #333; transform: translateX(-50%); z-index: 1; }
+        /* Maydon va Ustun */
+        .post { position: absolute; bottom: 0; left: 50%; width: 14px; height: 75%; background: linear-gradient(to right, #222, #444, #222); transform: translateX(-50%); z-index: 1; border-radius: 5px 5px 0 0; }
         
         /* Savat va To'r */
         .backboard-container { position: absolute; top: 15%; left: 50%; transform: translateX(-50%); z-index: 2; }
-        .backboard { width: 180px; height: 130px; background: rgba(255,255,255,0.1); border: 4px solid #fff; border-radius: 4px; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 20px; backdrop-filter: blur(2px); }
-        .rim { width: 75px; height: 12px; border: 4px solid var(--rim-color); border-radius: 50%; position: relative; z-index: 5; }
-        .net { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 65px; height: 60px; background: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.3) 5px, rgba(255,255,255,0.3) 10px), repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(255,255,255,0.3) 5px, rgba(255,255,255,0.3) 10px); border-radius: 0 0 40% 40%; border: 1px solid rgba(255,255,255,0.2); }
+        .backboard { width: 200px; height: 140px; background: rgba(255,255,255,0.05); border: 5px solid #fff; border-radius: 5px; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 25px; backdrop-filter: blur(4px); }
+        .rim { width: 80px; height: 12px; border: 5px solid var(--rim); border-radius: 50%; position: relative; z-index: 5; }
+        .net { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 70px; height: 65px; background: repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(255,255,255,0.4) 6px, rgba(255,255,255,0.4) 12px), repeating-linear-gradient(-45deg, transparent, transparent 6px, rgba(255,255,255,0.4) 6px, rgba(255,255,255,0.4) 12px); border-radius: 0 0 45% 45%; transition: 0.2s; }
 
-        /* Koptok */
-        .ball { position: absolute; bottom: 80px; left: calc(50% - 35px); width: 70px; height: 70px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #ff8500, #d62828); box-shadow: inset -5px -5px 15px rgba(0,0,0,0.5), 0 10px 20px rgba(0,0,0,0.4); z-index: 100; cursor: grab; }
+        /* Koptok va Olov effekti */
+        .ball { position: absolute; bottom: 80px; left: calc(50% - 35px); width: 75px; height: 75px; border-radius: 50%; background: url('https://pngimg.com/uploads/basketball/basketball_PNG1103.png') center/cover; box-shadow: 0 10px 20px rgba(0,0,0,0.5); z-index: 100; cursor: grab; }
+        .fire { box-shadow: 0 0 30px #ff4500, 0 0 60px #ff8c00 !important; filter: saturate(2); }
 
-        /* UI Paneli */
-        #ui { position: absolute; top: 20px; width: 100%; display: flex; justify-content: space-around; color: white; font-weight: 800; font-size: 22px; z-index: 1000; }
-        #timer { color: #e63946; }
-        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; z-index: 2000; }
-        button { padding: 15px 40px; font-size: 20px; border-radius: 30px; border: none; background: #fb8500; color: white; font-weight: bold; cursor: pointer; }
+        /* UI */
+        #ui { position: absolute; top: 20px; width: 100%; display: flex; justify-content: space-around; z-index: 1000; pointer-events: none; }
+        .stat { text-align: center; }
+        .stat-label { font-size: 12px; color: #aaa; text-transform: uppercase; }
+        .stat-value { font-size: 24px; display: block; }
+        
+        #wind-indicator { position: absolute; top: 100px; right: 20px; font-size: 14px; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 15px; }
+        
+        #overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; }
+        .combo-text { position: absolute; color: var(--gold); font-size: 40px; font-weight: 900; animation: comboAnim 0.5s ease-out; pointer-events: none; opacity: 0; }
+        
+        @keyframes comboAnim { 0% { opacity: 0; transform: scale(0.5); } 50% { opacity: 1; transform: scale(1.2); } 100% { opacity: 0; transform: scale(1); } }
     </style>
 </head>
 <body>
     <div id="game-container">
         <div id="ui">
-            <div id="timer">⏱ 60s</div>
-            <div>🏀 <span id="score">0</span></div>
+            <div class="stat"><span class="stat-label">Vaqt</span><span id="timer" class="stat-value">60</span></div>
+            <div class="stat"><span class="stat-label">Ball</span><span id="score" class="stat-value">0</span></div>
+            <div class="stat"><span class="stat-label">Combo</span><span id="combo" class="stat-value">0</span></div>
         </div>
+
+        <div id="wind-indicator">Shamol: <span id="wind-val">0</span></div>
 
         <div id="overlay">
-            <h1>BASKETBALL PRO</h1>
-            <p id="final-res"></p>
-            <button onclick="startGame()">BOSHLASH</button>
+            <h1 style="color: var(--gold); letter-spacing: 5px;">BASKETBALL PRO</h1>
+            <p id="final-msg"></p>
+            <button onclick="startGame()" style="padding: 15px 50px; border: none; border-radius: 30px; background: var(--rim); color: white; font-weight: bold; font-size: 20px; cursor: pointer;">O'YINNI BOSHLASH</button>
         </div>
 
-        <div class="court-floor"></div>
         <div class="post"></div>
-
         <div class="backboard-container">
-            <div class="backboard">
-                <div class="rim" id="hoop">
-                    <div class="net" id="net"></div>
-                </div>
-            </div>
+            <div class="backboard"><div class="rim" id="hoop"><div class="net" id="net"></div></div></div>
         </div>
-
         <div class="ball" id="ball"></div>
     </div>
 
@@ -62,44 +65,39 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        let score = 0;
-        let timeLeft = 60;
-        let gameActive = false;
-        let timerInterval;
-
-        const ball = document.getElementById('ball');
-        const scoreEl = document.getElementById('score');
-        const timerEl = document.getElementById('timer');
-        const overlay = document.getElementById('overlay');
-        const net = document.getElementById('net');
+        let score = 0, combo = 0, timeLeft = 60, wind = 0;
+        let gameActive = false, timerInterval;
+        const ball = document.getElementById('ball'), scoreEl = document.getElementById('score');
+        const comboEl = document.getElementById('combo'), timerEl = document.getElementById('timer');
+        const windEl = document.getElementById('wind-val'), net = document.getElementById('net');
 
         function startGame() {
-            score = 0;
-            timeLeft = 60;
-            gameActive = true;
-            scoreEl.innerText = "0";
-            overlay.style.display = "none";
+            score = 0; combo = 0; timeLeft = 60; gameActive = true;
+            document.getElementById('overlay').style.display = "none";
+            updateWind();
             startTimer();
+        }
+
+        function updateWind() {
+            wind = (Math.random() * 4 - 2).toFixed(1); // -2 dan 2 gacha
+            windEl.innerText = wind > 0 ? `➡️ ${wind}` : `⬅️ ${Math.abs(wind)}`;
         }
 
         function startTimer() {
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
                 timeLeft--;
-                timerEl.innerText = `⏱ ${timeLeft}s`;
+                timerEl.innerText = timeLeft;
                 if (timeLeft <= 0) endGame();
             }, 1000);
         }
 
         function endGame() {
-            gameActive = false;
-            clearInterval(timerInterval);
-            overlay.style.display = "flex";
-            document.getElementById('final-res').innerText = `O'yin tugadi! Ball: ${score}`;
-            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
+            gameActive = false; clearInterval(timerInterval);
+            document.getElementById('overlay').style.display = "flex";
+            document.getElementById('final-msg').innerText = `TUGADI! JAMI BALL: ${score}`;
         }
 
-        // Otish mantiqi
         let isDragging = false, startX, startY, startTime;
 
         ball.addEventListener('pointerdown', (e) => {
@@ -117,28 +115,51 @@
             const dy = e.clientY - startY;
 
             if (dy < -50 && duration < 500) {
-                const tx = dx * 2.5;
-                const ty = dy * 2.2;
-                launch(tx, ty);
-            } else {
-                reset();
-            }
+                // Shamol ta'sirini hisoblash
+                const targetX = (dx * 2.5) + (wind * 100);
+                const targetY = dy * 2.5;
+                launch(targetX, targetY);
+            } else { reset(); }
         });
 
         function launch(tx, ty) {
-            ball.style.transition = "transform 0.7s cubic-bezier(0.15, 0.85, 0.35, 1)";
+            if (combo >= 3) ball.classList.add('fire');
+            ball.style.transition = "transform 0.8s cubic-bezier(0.15, 0.85, 0.35, 1)";
             ball.style.transform = `translate(${tx}px, ${ty}px) scale(0.35) rotate(${tx}deg)`;
 
             setTimeout(() => {
-                if (Math.abs(tx) < 40 && ty < -380 && ty > -520) {
-                    score++;
-                    scoreEl.innerText = score;
-                    net.style.transform = "translateX(-50%) scaleY(1.3)"; // To'r tebranishi
-                    setTimeout(() => net.style.transform = "translateX(-50%) scaleY(1)", 200);
-                    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
+                const isGoal = Math.abs(tx) < 45 && ty < -380 && ty > -550;
+                if (isGoal) {
+                    handleGoal();
+                } else {
+                    handleMiss(tx);
                 }
-                setTimeout(reset, 500);
-            }, 700);
+                setTimeout(reset, 600);
+            }, 800);
+        }
+
+        function handleGoal() {
+            combo++;
+            let points = combo >= 3 ? 5 : 2;
+            score += points;
+            scoreEl.innerText = score;
+            comboEl.innerText = combo;
+            
+            net.style.transform = "translateX(-50%) scaleY(1.4)";
+            setTimeout(() => net.style.transform = "translateX(-50%) scaleY(1)", 300);
+            
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            updateWind();
+        }
+
+        function handleMiss(tx) {
+            combo = 0;
+            comboEl.innerText = "0";
+            ball.classList.remove('fire');
+            // Bounce effekti
+            ball.style.transition = "transform 0.4s ease-in";
+            ball.style.transform = `translate(${tx}px, 0px) scale(0.7)`;
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
         }
 
         function reset() {
