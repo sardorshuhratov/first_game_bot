@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Basketball WebApp</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #87CEEB; font-family: sans-serif; touch-action: none; }
+        #game-container { position: relative; width: 100vw; height: 100vh; }
+        #backboard { 
+            position: absolute; top: 100px; left: 50%; transform: translateX(-50%);
+            width: 200px; height: 150px; background: white; border: 5px solid #333;
+        }
+        #hoop {
+            position: absolute; top: 200px; left: 50%; transform: translateX(-50%);
+            width: 80px; height: 10px; background: red; border-radius: 50%;
+        }
+        #ball {
+            position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%);
+            width: 60px; height: 60px; background: orange; border-radius: 50%;
+            box-shadow: inset -5px -5px 10px rgba(0,0,0,0.5);
+            cursor: grab; transition: transform 0.1s;
+        }
+        #score { position: absolute; top: 20px; left: 20px; font-size: 24px; color: white; }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="score">Ball: 0</div>
+        <div id="backboard"></div>
+        <div id="hoop"></div>
+        <div id="ball"></div>
+    </div>
+
+    <script>
+        const ball = document.getElementById('ball');
+        const hoop = document.getElementById('hoop');
+        const scoreEl = document.getElementById('score');
+        let score = 0;
+        let isDragging = false;
+        let startY, startX;
+
+        ball.addEventListener('pointerdown', (e) => {
+            isDragging = true;
+            startY = e.clientY;
+            startX = e.clientX;
+            ball.style.cursor = 'grabbing';
+        });
+
+        window.addEventListener('pointermove', (e) => {
+            if (!isDragging) return;
+            const deltaY = e.clientY - startY;
+            const deltaX = e.clientX - startX;
+            ball.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+        });
+
+        window.addEventListener('pointerup', (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            
+            // Otish effekti (simulyatsiya)
+            const endY = e.clientY;
+            if (endY < 300) { // Agar tepaga otilgan bo'lsa
+                ball.style.transition = "all 0.5s ease-out";
+                ball.style.transform = `translateY(-400px) scale(0.5)`;
+                
+                setTimeout(() => {
+                    checkScore();
+                    resetBall();
+                }, 500);
+            } else {
+                resetBall();
+            }
+        });
+
+        function resetBall() {
+            ball.style.transition = "all 0.3s";
+            ball.style.transform = `translate(0, 0) scale(1)`;
+        }
+
+        function checkScore() {
+            score += 2;
+            scoreEl.innerText = `Ball: ${score}`;
+            alert("GOAL! +2 Ball");
+        }
+    </script>
+</body>
+</html>
