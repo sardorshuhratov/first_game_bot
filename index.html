@@ -1,87 +1,132 @@
 <!DOCTYPE html>
-<html>
+<html lang="uz">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Basketball WebApp</title>
+    <title>3D Basketball Pro</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #87CEEB; font-family: sans-serif; touch-action: none; }
-        #game-container { position: relative; width: 100vw; height: 100vh; }
+        body { margin: 0; overflow: hidden; background: radial-gradient(circle, #2c3e50, #000000); font-family: 'Arial', sans-serif; touch-action: none; }
+        #game-container { position: relative; width: 100vw; height: 100vh; display: flex; justify-content: center; }
+        
+        /* Savat dizayni */
         #backboard { 
-            position: absolute; top: 100px; left: 50%; transform: translateX(-50%);
-            width: 200px; height: 150px; background: white; border: 5px solid #333;
+            position: absolute; top: 15%; width: 160px; height: 120px; 
+            background: rgba(255,255,255,0.9); border: 4px solid #333; border-radius: 8px;
+            display: flex; justify-content: center; align-items: flex-end;
         }
         #hoop {
-            position: absolute; top: 200px; left: 50%; transform: translateX(-50%);
-            width: 80px; height: 10px; background: red; border-radius: 50%;
+            width: 70px; height: 10px; background: #e67e22; border-radius: 50%;
+            position: relative; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(230,126,34,0.5);
         }
+        #hoop::after {
+            content: ""; position: absolute; top: 5px; left: 5px; width: 60px; height: 40px;
+            border: 2px dashed rgba(0,0,0,0.3); border-radius: 0 0 50% 50%;
+        }
+
+        /* Koptok dizayni */
         #ball {
-            position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%);
-            width: 60px; height: 60px; background: rgb(26, 17, 2); border-radius: 50%;
-            box-shadow: inset -5px -5px 10px rgba(0,0,0,0.5);
-            cursor: grab; transition: transform 0.1s;
+            position: absolute; bottom: 80px; width: 70px; height: 70px; 
+            background: radial-gradient(circle at 30% 30%, #f39c12, #d35400);
+            border-radius: 50%; box-shadow: 0 10px 20px rgba(0,0,0,0.6);
+            cursor: grab; z-index: 10;
         }
-        #score { position: absolute; top: 20px; left: 20px; font-size: 24px; color: white; }
+
+        #score { position: absolute; top: 30px; left: 20px; font-size: 28px; color: #f1c40f; font-weight: bold; text-shadow: 2px 2px 4px #000; }
+        .plus-score { position: absolute; color: #2ecc71; font-size: 30px; font-weight: bold; animation: fadeUp 1s forwards; pointer-events: none; }
+        
+        @keyframes fadeUp {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-100px); }
+        }
     </style>
 </head>
 <body>
     <div id="game-container">
         <div id="score">Ball: 0</div>
-        <div id="backboard"></div>
-        <div id="hoop"></div>
+        <div id="backboard"><div id="hoop"></div></div>
         <div id="ball"></div>
     </div>
 
     <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
         const ball = document.getElementById('ball');
         const hoop = document.getElementById('hoop');
         const scoreEl = document.getElementById('score');
+        
         let score = 0;
         let isDragging = false;
-        let startY, startX;
+        let startX, startY, startTime;
 
         ball.addEventListener('pointerdown', (e) => {
             isDragging = true;
-            startY = e.clientY;
             startX = e.clientX;
-            ball.style.cursor = 'grabbing';
-        });
-
-        window.addEventListener('pointermove', (e) => {
-            if (!isDragging) return;
-            const deltaY = e.clientY - startY;
-            const deltaX = e.clientX - startX;
-            ball.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+            startY = e.clientY;
+            startTime = Date.now();
+            ball.style.transition = "none";
         });
 
         window.addEventListener('pointerup', (e) => {
             if (!isDragging) return;
             isDragging = false;
-            
-            // Otish effekti (simulyatsiya)
+
+            const endX = e.clientX;
             const endY = e.clientY;
-            if (endY < 300) { // Agar tepaga otilgan bo'lsa
-                ball.style.transition = "all 0.5s ease-out";
-                ball.style.transform = `translateY(-400px) scale(0.5)`;
-                
-                setTimeout(() => {
-                    checkScore();
-                    resetBall();
-                }, 500);
+            const duration = Date.now() - startTime;
+
+            const diffX = endX - startX;
+            const diffY = endY - startY;
+
+            // Agar yuqoriga qarab tez surilsa (Otish)
+            if (diffY < -50 && duration < 500) {
+                const power = Math.abs(diffY) / duration;
+                const targetX = diffX * 3; // Gorizontal yo'nalish
+                const targetY = diffY * 2.5; // Vertikal masofa
+
+                launchBall(targetX, targetY);
             } else {
                 resetBall();
             }
         });
 
-        function resetBall() {
-            ball.style.transition = "all 0.3s";
-            ball.style.transform = `translate(0, 0) scale(1)`;
+        function launchBall(x, y) {
+            ball.style.transition = "transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+            // Koptok ham yon tomonga, ham tepaga uchadi va uzoqlashgani uchun kichrayadi
+            ball.style.transform = `translate(${x}px, ${y}px) scale(0.3)`;
+
+            setTimeout(() => {
+                checkHit(x, y);
+            }, 700);
         }
 
-        function checkScore() {
-            score += 2;
-            scoreEl.innerText = `Ball: ${score}`;
-            alert("GOAL! +2 Ball");
+        function checkHit(x, y) {
+            // Savat markazi koordinatalari bilan solishtirish
+            // x koordinatasi taxminan 0 bo'lsa (markazda), y esa savat balandligida
+            if (Math.abs(x) < 50 && y < -350 && y > -550) {
+                score += 2;
+                scoreEl.innerText = `Ball: ${score}`;
+                showEffect();
+                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            }
+            
+            setTimeout(resetBall, 300);
+        }
+
+        function showEffect() {
+            const effect = document.createElement('div');
+            effect.className = 'plus-score';
+            effect.innerText = '+2';
+            effect.style.left = '50%';
+            effect.style.top = '25%';
+            document.body.appendChild(effect);
+            setTimeout(() => effect.remove(), 1000);
+        }
+
+        function resetBall() {
+            ball.style.transition = "transform 0.4s ease";
+            ball.style.transform = "translate(0, 0) scale(1)";
         }
     </script>
 </body>
