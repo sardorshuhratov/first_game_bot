@@ -1,2 +1,10 @@
-# first_game_bot
-My first web page with a simple basketball game
+# Birinchi oddiy basketbol oyinim.
+# Bu mening birinchi web sahifam. Unda oddiy basketbol o`yini bor.
+# Nimalarda yozilgan:
+
+# HTML
+# CSS
+# JavaScript
+# Python
+
+# Sardor Shuhratov
