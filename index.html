@@ -250,33 +250,51 @@
         });
 
         function launchBall(vx, vy) {
-            cancelAnimationFrame(animId);
-            const start = ballWrap.getBoundingClientRect();
-            let x = start.left + start.width / 2;
-            let y = start.top + start.height / 2;
-            let last = performance.now();
-            let scored = false;
-            function frame(now) {
-                const dt = (now - last) / 1000;
-                last = now;
-                vy += GRAVITY * dt;
-                x += vx * dt;
-                y += vy * dt;
-                ballWrap.style.transform = `translate(${x - start.left}px,${y - start.top}px) scale(0.6)`;
-                const rim = getRim();
-                const dist = Math.hypot(x - rim.x, y - rim.y);
-                if (!scored && dist < rim.r && vy > 0) {
-                    scored = true;
-                    handleGoal(dist < rim.r * 0.6);
-                }
-                if (y > window.innerHeight + 100) {
-                    resetBall();
-                    return;
-                }
-                animId = requestAnimationFrame(frame);
-            }
-            animId = requestAnimationFrame(frame);
+    cancelAnimationFrame(animId);
+    
+    // Topning boshlang'ich pozitsiyasi (0, 0)
+    let curX = 0;
+    let curY = 0;
+    let last = performance.now();
+    let scored = false;
+
+    function frame(now) {
+        const dt = (now - last) / 1000;
+        last = now;
+
+        // Fizika hisob-kitoblari
+        vy += GRAVITY * dt;
+        curX += vx * dt;
+        curY += vy * dt;
+
+        // Topni harakatlantirish (scale koptok uzoqlashgani sari kichrayadi)
+        const scale = Math.max(0.4, 1 + curY / 1000); 
+        ballWrap.style.transform = `translate(${curX}px, ${curY}px) scale(${scale})`;
+
+        // Topning hozirgi ekran koordinatalari (savat bilan solishtirish uchun)
+        const ballRect = ballWrap.getBoundingClientRect();
+        const bX = ballRect.left + ballRect.width / 2;
+        const bY = ballRect.top + ballRect.height / 2;
+
+        const rim = getRim();
+        const dist = Math.hypot(bX - rim.x, bY - rim.y);
+
+        // Savatga tushish tekshiruvi
+        if (!scored && dist < rim.r && vy > 0 && bY < rim.y + 20) {
+            scored = true;
+            handleGoal(dist < rim.r * 0.5);
         }
+
+        // Top ekrandan chiqib ketsa to'xtatish
+        if (ballRect.top > window.innerHeight || ballRect.left < -100 || ballRect.left > window.innerWidth + 100) {
+            resetBall();
+            return;
+        }
+
+        animId = requestAnimationFrame(frame);
+    }
+    animId = requestAnimationFrame(frame);
+}
 
         function handleGoal(isSwish) {
             score += 2;
