@@ -1,11 +1,13 @@
-# Birinchi oddiy basketbol oyinim.
+# Basketbol o‘yini
 
-# Bu mening birinchi web sahifam. Unda oddiy basketbol o`yini bor.
-# Nimalarda yozilgan:
+Bu mening birinchi web sahifam. Unda oddiy basketbol o‘yini bor.
 
-# HTML
-# CSS
-# JavaScript
-# Python
+Nimalarda yozilgan:
+HTML, CSS, JavaScript, Python
 
-# Sardor Shuhratov
+Qanday ochiladi:
+index.html faylini brauzerda oching
+backend uchun: python main.py
+
+Kamchilliklar uchun uzur!
+
